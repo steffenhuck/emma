@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Emma · a game of riddles</title>
+<script data-goatcounter="https://steffenhuck.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
+<style>
+  :root{
+    --paper:#f5eedd; --paper2:#efe6cf; --ink:#2b2317; --faded:#6e6353;
+    --rule:#b9ac8e; --green:#5f7d5a; --line:#d8cdb0;
+  }
+  html{background:#e6dcc4;}
+  body{
+    margin:0; color:var(--ink);
+    background:var(--paper);
+    background-image:radial-gradient(ellipse at 50% 0%, rgba(255,255,255,.5), rgba(0,0,0,0) 60%),
+                     radial-gradient(ellipse at 50% 120%, rgba(90,70,40,.10), rgba(0,0,0,0) 55%);
+    font-family:"Baskerville","Libre Baskerville","Palatino Linotype",Palatino,Georgia,serif;
+    font-size:1.06rem; line-height:1.62;
+  }
+  main{max-width:34em; margin:0 auto; padding:2.2em 1.2em 3em;}
+  #page{animation:appear .5s ease;}
+  @keyframes appear{from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:none;}}
+  .date{
+    text-align:center; font-variant:small-caps; letter-spacing:.18em;
+    color:var(--green); font-size:.82em; margin:0 0 1.1em;
+  }
+  .date::before,.date::after{content:"—"; color:var(--rule); margin:0 .6em;}
+  h1,h2{font-weight:normal; text-align:center;}
+  p{margin:.85em 0; text-align:justify; hyphens:auto;}
+  blockquote.flash{
+    margin:1.05em .4em 1.05em 1.1em; padding:.15em 0 .15em 1em;
+    border-left:2px solid var(--green); color:#1f1a10;
+    font-size:.98em;
+  }
+  blockquote.flash p{margin:.4em 0;}
+  .verse{white-space:pre-wrap; font-size:.95em; text-align:left; margin:1em 0 1em 1.6em; line-height:1.5;}
+  .frag p{color:var(--faded);}
+  .lacuna{color:var(--rule); letter-spacing:.2em;}
+  .ledger{
+    margin:1.3em auto; padding:.8em 1.2em .9em; max-width:26em;
+    border:1px solid var(--rule); font-style:italic; line-height:1.6em; font-size:.95em;
+  }
+  .ledger > div{border-bottom:1px solid var(--line); padding:.15em 0;}
+  .ledger > div:last-child{border-bottom:none;}
+  .ledger .lhead{font-style:normal; font-variant:small-caps; letter-spacing:.12em; text-align:center;}
+  .ledger .struck{text-decoration:line-through; text-decoration-thickness:1px;}
+  .ledger .ghost{opacity:.45;}
+  .ledger .evid{float:right; font-size:.85em; color:var(--faded);}
+  .choices{margin:1.6em 0 0; padding:0; list-style:none;}
+  .choices button{
+    display:block; width:100%; text-align:left; margin:.45em 0; padding:.6em .95em;
+    font:inherit; color:inherit; background:rgba(255,255,255,.25);
+    border:1px solid var(--rule); cursor:pointer; line-height:1.45;
+  }
+  .choices button:hover,.choices button:focus{background:var(--paper2); border-color:var(--green); outline:none;}
+  .choices.bare button{
+    text-align:center; border:none; background:none; font-style:italic; color:var(--faded);
+  }
+  .choices.bare button:hover,.choices.bare button:focus{color:var(--ink); background:none;}
+  .rule{border:none; border-top:3px double var(--rule); margin:1.6em auto; width:70%;}
+  .titlepage{text-align:center;}
+  .titlepage h1{font-size:2.6em; letter-spacing:.28em; margin:.7em 0 .1em; font-variant:small-caps;}
+  .titlepage .sub{font-style:italic; margin:.2em 0;}
+  .titlepage .credit{font-variant:small-caps; letter-spacing:.14em; font-size:.85em; margin:1.1em 0;}
+  .preface{text-align:justify; font-size:.98em;}
+  .finis{text-align:center;}
+  .finis .fin{font-variant:small-caps; letter-spacing:.35em; margin:1.4em 0 .4em; font-size:.9em; color:var(--faded);}
+  .finis .ename{font-variant:small-caps; letter-spacing:.22em; font-size:1.5em; margin:.2em 0 .9em;}
+  .finis .verdict{font-style:italic; margin:1em 0;}
+  .finis .compare{text-align:justify;}
+  footer{text-align:center; padding:0 0 2.5em; font-style:italic;}
+  footer a{color:var(--faded); text-decoration:none;}
+  footer a:hover{color:var(--ink);}
+</style>
+</head>
+<body>
+<main><div id="page"><noscript><p style="text-align:center">This book requires a reader with scripts enabled.</p></noscript></div></main>
+<footer><a href="https://steffenhuck.github.io"><em>steffen huck</em></a></footer>
+<script>
+"use strict";
+/* ————— state ————— */
+let S;
+function freshState(){return {f:{martin:false,flirt:false,vE:false,vJ:false,vH:false},rec:{},mark:null,div:null,node:"title"};}
+function veils(){return (S.f.vE?1:0)+(S.f.vJ?1:0)+(S.f.vH?1:0);}
+const fl=q=>`<blockquote class="flash">${q}</blockquote>`;
+const p=t=>`<p>${t}</p>`;
+
+/* ————— ledger ————— */
+function ledger(full){
+  let r=`<div class="ledger"><div class="lhead">matches made at hartfield</div>`;
+  r+=`<div>Mr. Weston — Miss Taylor <span class="evid">kept</span></div>`;
+  if(S.f.martin){
+    r+=`<div class="struck">Mr. Elton — Harriet Smith</div><div>Robert Martin — Harriet Smith <span class="evid">in another hand</span></div>`;
+  }else{
+    r+=`<div class="struck">Mr. Elton — Harriet Smith <span class="evid">${S.rec.f9?"“thy ready wit—”":"—"}</span></div>`;
+  }
+  if(full){
+    r+=`<div class="struck">Mr. Dixon — Jane Fairfax <span class="evid">${S.rec.f15?"“truths not told”":"—"}</span></div>`;
+    r+=`<div class="struck">Frank Churchill — herself <span class="evid">withdrawn, February</span></div>`;
+    if(!S.f.martin) r+=`<div class="struck">Frank Churchill — Harriet Smith <span class="evid">${S.rec.f25?"“that was the service—”":"—"}</span></div>`;
+    r+=`<div class="ghost">Mr. Knightley — ________ <span class="evid">${S.f.vH?"no name was to pass our lips":"the hand knew, and did not write"}</span></div>`;
+  }
+  return r+`</div>`;
+}
+
+/* ————— nodes ————— */
+const N={
+
+title:{raw:true,text:()=>`
+  <div class="titlepage">
+    <h1>Emma</h1>
+    <p class="sub">a game of riddles, after <em>Emma</em></p>
+    <p class="credit">by Jane Austen · the text of 1816</p>
+    <hr class="rule">
+    <div class="preface">
+      <p>Here is the history of Highbury for one turning of the year, kept as Miss Emma Woodhouse’s certainty would have kept it; and copied in among its pages, from the riddle-book she and her friend began, those few sentences of the author’s own which the compiler could neither improve nor forgive. The commentary believes itself; the quotations know better. Attend to which is which.</p>
+      <p><em>The reader of a book follows; the reader of this book chooses.</em></p>
+    </div>
+  </div>`,
+ choices:()=>{
+   const c=[{l:"open the book",to:"n01"}];
+   try{ if(localStorage.getItem("emma-riddles") && JSON.parse(localStorage.getItem("emma-riddles")).node!=="title")
+     c.push({l:"take it up where the ribbon lies",to:"__resume"});}catch(e){}
+   return c;
+ },bare:true},
+
+/* ———— ACT I · MICHAELMAS TO THE YEAR'S END ———— */
+
+n01:{date:"michaelmas · the wedding-day",text:()=>
+  p(`Miss Taylor was married from Hartfield this morning, and is Mrs. Weston of Randalls by the time the cake is cut. Sixteen years a friend — the last five of them a companion who never once opposed a scheme of Emma’s — and now half a mile off, which Mr. Woodhouse, mourning by the fire, accounts as good as Yorkshire. “Poor Miss Taylor!” The house is quiet; the evening is long; and it is a truth the village will confirm on application that the match itself was of Miss Woodhouse’s own making, prophesied by her in Broadway Lane four years ago, when the rain came on and Mr. Weston ran for the umbrellas.`)+
+  fl(`The real evils, indeed, of Emma’s situation were the power of having rather too much her own way, and a disposition to think a little too well of herself; these were the disadvantages which threatened alloy to her many enjoyments. The danger, however, was at present so unperceived, that they did not by any means rank as misfortunes with her.`),
+ choices:()=>[
+  {l:"When Mr. Knightley calls to-night, observe to him that she made this match herself, four years ago.",to:"n02",canon:true,mk:"vaunt"},
+  {l:"Say nothing to-night of making matches; grieve simply for the loss of Miss Taylor.",to:"n02",canon:false,mk:"grieve",div:"on the wedding-day itself, when the making of the match went unclaimed"}]},
+
+n02:{date:"michaelmas · evening",text:()=>
+  p(S.mark==="vaunt"
+    ?`The claim was made, and made well; modesty on such a point would have been a kind of falsehood. Mr. Knightley — of Donwell Abbey, eight-and-thirty, the oldest friend of the house and the only person who ever finds fault with its daughter — walked over after dinner, and heard it with less gratitude than it deserved.`
+    :`She grieved, and said nothing of her own share in the morning’s work; but Mr. Knightley — of Donwell Abbey, eight-and-thirty, the oldest friend of the house and the only person who ever finds fault with its daughter — walked over after dinner, and the subject arose without her help, as subjects she is entitled to generally do.`)+
+  fl(`“I do not understand what you mean by ‘success,’” said Mr. Knightley. “Success supposes endeavour. Your time has been properly and delicately spent, if you have been endeavouring for the last four years to bring about this marriage.”`)+
+  p(`A lucky guess, he called it, when he had done. The distinction between guessing and knowing is one that people who cannot do the latter are naturally tender of.`),
+ choices:()=>[
+  {l:"Hold to it: the match was made at Hartfield, and success has blessed her endeavours.",to:"n03",canon:true,mk:"made"},
+  {l:"Allow Mr. Knightley his word: a lucky guess is all it was.",to:"n03",canon:false,mk:"guess",div:"in the first argument with Mr. Knightley, when the word ‘success’ was surrendered"}]},
+
+n03:{date:"october",text:()=>
+  p(S.mark==="made"
+    ?`It stood, then, as it deserved to stand: one match made, and the maker at leisure. And Providence, which favours the industrious, promptly furnished new material.`
+    :`A guess, then, if he would have it so; though Highbury went on treating her guesses with a respect other people’s certainties never earn. New material, at any rate, presented itself within the month.`)+
+  p(`Mrs. Goddard’s school keeps a parlour-boarder of seventeen, one Harriet Smith, lately brought to the Hartfield evening circle: blue eyes, soft manners, a beautiful unformed docility, and a birth that is nobody’s business because it is nobody’s knowledge. She has been all summer at a farm called Abbey-Mill, among people named Martin, and speaks of it as if it were society.`)+
+  fl(`Harriet Smith was the natural daughter of somebody.`),
+ choices:()=>[
+  {l:"See in Harriet a gentleman’s daughter, certainly — wanting only notice to be owned.",to:"n04",canon:true,mk:"gentle"},
+  {l:"See what is known and no more: a parlour-boarder, of nobody knows whom.",to:"n04",canon:false,mk:"plain",div:"over Harriet’s parentage, taken at its plain unknown worth"}]},
+
+n04:{date:"november · a walk",text:()=>
+  p(S.mark==="gentle"
+    ?`A gentleman’s daughter: the eye that had matched Randalls could hardly mistake blood, whatever the register omitted. She was taken up accordingly — walks, evenings, improvement.`
+    :`Whatever she was, she was taken up — walks, evenings, improvement; kindness need not wait upon a pedigree.`)+
+  p(`On the walks Harriet talks, and what she talks of is Abbey-Mill: the two parlours, the very good-humoured Mr. Robert Martin, four-and-twenty, who farms it. There is a great deal of him in her mouth for a young man of no consequence, and the lane to the vicarage — where Mr. Elton, Highbury’s young vicar, keeps a house that wants nothing but a mistress — lies conveniently the other way.`),
+ choices:()=>[
+  {l:"Turn the walk toward the vicarage; Harriet’s notions want widening, and Mr. Elton’s garden is worth her seeing.",to:"n05",canon:true,mk:"vicarage"},
+  {l:"Let her talk on of the Martins while the lane lasts.",to:"n05",canon:false,mk:"walnuts",set:()=>{S.rec.walnuts=1;},div:"in the lane, when Harriet was let talk of Abbey-Mill"}]},
+
+n05:{date:"early december · the sitting",text:()=>
+  (S.mark==="walnuts"
+    ? p(`She was let talk, and the talk was all one thing:`)+
+      fl(`He had gone three miles round one day in order to bring her some walnuts, because she had said how fond she was of them, and in every thing else he was so very obliging. He had his shepherd’s son into the parlour one night on purpose to sing to her.`)+
+      p(`Walnuts, however, are not an establishment; and the winter’s real business now opened of itself.`)
+    : p(`The vicarage garden was much admired, and the Martins heard of rather less; a mind like Harriet’s holds what is put before it. The winter’s real business now opened of itself.`))+
+  p(`Mr. Elton, shown a likeness Emma once took of a friend, begged that Miss Smith might sit to her: a whole-length, in water-colours. He attended every sitting, was ready to be called on for opinion, and was in raptures — such raptures that the room grew warm with them. When the company judged the finished picture, one judgment sat oddly among the rest.`)+
+  fl(`“You have made her too tall, Emma,” said Mr. Knightley.`)+
+  p(`Mr. Elton would not hear of it: not in the least too tall; consider, she is sitting down; the proportions, the foreshortening, exact. His defence, it might be noticed, was all of the drawing — the naïveté of Miss Woodhouse’s style, the skill, the eye. It might be noticed. It was pleasanter not to.`),
+ choices:()=>[
+  {l:"His raptures are for Harriet; the picture has merely hastened what was already coming.",to:"n06",canon:true,mk:"sitter"},
+  {l:"His raptures attach themselves oddly to the artist; note where the compliments land.",to:"n06",canon:false,mk:"artist",div:"at the portrait, when the compliments were watched to their landing-place"}]},
+
+n06:{date:"the same week",text:()=>
+  p(S.mark==="artist"
+    ?`Noted — and excused; a man in love praises the frame the beloved comes in. Mr. Elton has carried the portrait to London himself, to be framed in Bond Street: an afternoon suddenly empty.`
+    :`Mr. Elton has carried the portrait to London himself, to be framed in Bond Street — a precious charge, he called it. An afternoon suddenly empty.`),
+ choices:()=>[
+  {l:"Spend it planning the visits Harriet will one day pay as mistress of the vicarage.",to:"n07",mk:"plan"},
+  {l:"Spend it at the instrument, practising what Miss Fairfax is said to play better.",to:"n07",mk:"music"}]},
+
+n07:{date:"the same day · a parcel from abbey-mill",text:()=>
+  p(`Before the afternoon was out, a parcel: two songs lent to the Martins, returned — and with them a letter, for Harriet, from Mr. Robert Martin. A direct proposal of marriage. Harriet brought it to Hartfield at a run, all confusion of hope and fright, and stood waiting to be told what she felt.`)+
+  fl(`She read, and was surprized. The style of the letter was much above her expectation. There were not merely no grammatical errors, but as a composition it would not have disgraced a gentleman; the language, though plain, was strong and unaffected, and the sentiments it conveyed very much to the credit of the writer.`)+
+  p(`“Pray, dear Miss Woodhouse, tell me what I ought to do.” The question every friend of Harriet’s must sooner or later be asked — and answer.`),
+ choices:()=>[
+  {l:"Say that one of his sisters surely helped him to it — and smile her, gently, toward a refusal.",to:"n08",canon:true,mk:"sisters"},
+  {l:"Own the letter a good one — and still guide her from the farm; she may look higher.",to:"n08",canon:true,mk:"ownletter"},
+  {l:"Tell her honestly what the letter is, and let her own heart answer it.",to:"B1a",canon:false,set:()=>{S.f.martin=true;},div:"at the letter from Abbey-Mill, answered honestly"}]},
+
+n08:{date:"december",text:()=>
+  p(S.mark==="sisters"
+    ?`A sister’s hand in it, very probably; the style was above the man, and saying so cost Harriet nothing but her suspense. No advice was given — Emma was scrupulous on that point, and said so twice — only it became clear, sentence by sentence, which answer a young woman with her possibilities owed herself.`
+    :`The letter was allowed its due, which generosity made the rest come easier: no advice given — Emma was scrupulous on that point, and said so twice — only it became clear, sentence by sentence, which answer a young woman with her possibilities owed herself.`)+
+  p(`The refusal was written at Hartfield, in Harriet’s hand and Harriet’s own words, nearly. She cried a little, over the mother and sisters chiefly. It was kindest to hurry her past that.`),
+ choices:()=>[
+  {l:"Comfort her: a man of four-and-twenty bears such weather; he will soon be comforted elsewhere.",to:"n09",mk:"weather"},
+  {l:"Comfort her: the sisters will forgive in time what they cannot at present understand.",to:"n09",mk:"sisters2"}]},
+
+B1a:{date:"december",text:()=>
+  p(`The letter was called what it was — a good letter, an honest one, from a man who had gone three miles round for walnuts — and Harriet’s heart, asked directly, answered directly. The reply that went back to Abbey-Mill said yes.`)+
+  p(`Mr. Knightley walked over the next evening expressly to be pleased, which he did with an energy bordering on triumph, and was so ungenerous as to congratulate Emma on having <em>done nothing</em>: the very highest praise, he said, he had ever had it in his power to offer her. One took it as it was doubtless half meant.`),
+ choices:()=>[
+  {l:"Own it frankly to him: the letter deserved its answer, and she said so.",to:"B1b",mk:"frank"},
+  {l:"Say only that Harriet knew her own heart, and wanted no help with it.",to:"B1b",mk:"quiet"}]},
+
+B1b:{date:"christmas · the banns",text:()=>
+  p(`The banns are read at Highbury church; Harriet will be Mrs. Robert Martin of Abbey-Mill before the winter is out.`),
+ choices:()=>[
+  {l:"Send to the farm a wedding-gift of drawing-paper and the two borrowed songs.",to:"n09"},
+  {l:"Call at Mrs. Goddard’s while the news is still warm in the village.",to:"n09"}]},
+
+n09:{date:"mid-december",text:()=>S.f.martin
+  ? p(`With Harriet settled, Mr. Elton might have been expected to thin his attendance at Hartfield. He thickened it. He dined, he called, he admired; he sighed over the pianoforte and fetched shawls nobody had asked for. Mr. Knightley, dining also, watched this ceremony with an eyebrow, and said afterwards only that Elton was a very good sort of man who knew his own interest — a remark that seemed to want a second half, and did not get one.`)+
+    p(`For whom does a young vicar polish himself so, in a house with one young lady in it?`)
+  : p(`It could not be kept from Mr. Knightley that Robert Martin had proposed and been refused — he had himself advised the man to marry, it appeared, which accounted for a warmth otherwise out of all proportion. There was a quarrel. He said Harriet had been no friend served but a vanity fed; he said the refusal would be repented; and of the hope now standing in Martin’s place he said this:`)+
+    fl(`“Depend upon it, Elton will not do. Elton is a very good sort of man, and a very respectable vicar of Highbury, but not at all likely to make an imprudent match. He knows the value of a good income as well as any body.”`)+
+    p(`He spoke of ladies of twenty thousand pounds, and of Elton among men speaking unlike Elton among ladies. He spoke, in short, with all the confidence of a man who dines where women are not.`),
+ choices:()=>S.f.martin?[
+  {l:"For herself, plainly; his admiration of the portrait said as much. Absurd — but keep the vicar at a civil distance.",to:"n10",canon:false,mk:"heedM",div:"in December, when Mr. Elton’s polish was read as pointing at Hartfield’s own daughter"},
+  {l:"For nobody; a vicar’s manner is his stock in trade. Let him sigh.",to:"n10",canon:true,mk:"dismissM"}]:[
+  {l:"He speaks warmly, and warmth misjudges; he has not seen what she has seen of Mr. Elton’s heart.",to:"n10",canon:true,mk:"dismiss"},
+  {l:"He has known Elton sixteen years; carry the warning a while before setting it down.",to:"n10",canon:false,mk:"heed",div:"at Mr. Knightley’s warning, carried instead of dropped"}]},
+
+n10:{date:"mid-december · the riddle-book",text:()=>
+  p((S.mark==="dismiss")
+    ?`The warning was set down where warm things cool. And as if to reward her steadiness, the very next morning furnished proof no reasonable person could quarrel with.`
+    :(S.mark==="heed")
+    ?`The warning was carried — awkward, angular luggage — and the very next morning something arrived that seemed expressly designed to relieve her of it.`
+    :`The mornings at Hartfield were now given to a great work: a riddle-book, into which Harriet was collecting all the charades and conundrums the neighbourhood could yield. Mr. Woodhouse contributed the first stanza of “Kitty, a fair but frozen maid,” three times, never getting further. And then Mr. Elton, applied to, brought this — left, with a bow, as “a friend’s.”`)+
+  ((S.mark==="dismiss"||S.mark==="heed")
+    ? p(`The mornings at Hartfield were given just now to a great work: a riddle-book, into which Harriet was collecting all the charades and conundrums the neighbourhood could yield. Mr. Woodhouse contributed the first stanza of “Kitty, a fair but frozen maid,” three times, never getting further. And Mr. Elton, applied to, brought this — left, with a bow, as “a friend’s.”`):"")+
+  `<div class="verse">My first displays the wealth and pomp of kings,
+    Lords of the earth! their luxury and ease.
+Another view of man, my second brings,
+    Behold him there, the monarch of the seas!
+
+But ah! united, what reverse we have!
+    Man’s boasted power and freedom, all are flown;
+Lord of the earth and sea, he bends a slave,
+    And woman, lovely woman, reigns alone.
+
+    Thy ready wit the word will soon supply,
+    May its approval beam in that soft eye!</div>`+
+  p(`<em>Court</em> — <em>ship</em> — <em>courtship</em>. A very good hint, and no great puzzle to a quick eye. The only question a charade leaves is what to do with it first.`),
+ choices:()=>[
+  {l:"Carry it to "+(S.f.martin?"Abbey-Mill":"Mrs. Goddard’s")+" at once — such news will not keep, and the morning is fine.",to:"n11",canon:true,mk:"carried",set:()=>{S.f.vE=true;}},
+  {l:"Keep it the evening; the book deserves a fair copy, taken slowly, alone.",to:"n11",canon:false,mk:"faircopy",set:()=>{S.rec.f9=1;},div:"the evening the charade was copied out slowly, alone"}]},
+
+n11:{date:"december the twentieth, or near it",text:()=>
+  (S.mark==="faircopy"
+    ? p(`The fair copy was taken by candlelight, and a fair copy goes at the pace of the pen. Line by line the charade passed under her hand, and one line stopped it:`)+
+      fl(`Thy ready wit the word will soon supply.`)+
+      fl(`Humph—Harriet’s ready wit! All the better. A man must be very much in love, indeed, to describe her so.`)+
+      p(`So the pen recorded, and the record kept what the pen thought of it. The word <em>wit</em> sat on the page all evening, describing somebody.`)
+    : p(`It was received as such news deserves — with blushes, with the pleasure of being first, with the charade read aloud twice; and if a wit was wanted somewhere in it, no matter: a man in love describes generously. The book gained its best leaf, and the morning its purpose.`))+
+  p(`Before Christmas the London family came: Isabella, Emma’s gentle sister, her husband Mr. John Knightley — a clever, sharp-edged lawyer, brother to the Knightley of Donwell — and five children. The fireside argued the sea, of all things: whether South End had done the children good. Mr. Woodhouse held the sea to be almost always an evil; and the debate was stopped at last from the chair beside him —`)+
+  fl(`“I must beg you not to talk of the sea. It makes me envious and miserable;—I who have never seen it!”`)+
+  p(`Walking one evening, Mr. John Knightley turned from the weather to a nearer subject.`)+
+  fl(`“Yes,” said Mr. John Knightley presently, with some slyness, “he seems to have a great deal of good-will towards you.”`)+
+  p(`Mr. Elton — meaning her. “Mr. Elton in love with me!—What an idea!” A lawyer sees contracts forming in every civility; married men see courtship in a comma.`),
+ choices:()=>{
+  const c=[{l:"A brother’s fancy, and nothing in it; men of law imagine her blind who see further than they.",to:"n12",canon:true,mk:"brushed"}];
+  if(!S.f.vE) c.push({l:"Sit a moment with the unease before it passes — for whom has Mr. Elton been polishing himself?",to:"n12",canon:false,mk:"sat",div:"on the walk with Mr. John Knightley, when the unease was given its moment"});
+  return c;}},
+
+n12:{date:"december the twenty-fourth · randalls",text:()=>
+  p(S.mark==="sat"
+    ?`The moment was sat with, and was not comfortable; but Christmas Eve does not wait on comfort.`
+    :`Christmas Eve, and the dinner at Randalls — fixed for the twenty-fourth this fortnight past.`)+
+  p(`${S.f.martin?"The party was small and":"Harriet being kept at Mrs. Goddard’s by a sore throat, the party was smaller than planned, and"} Mr. Elton was everywhere at Emma’s elbow — grieving over ${S.f.martin?"the shortness of the table":"Harriet’s throat"} for a sentence, and asking after Emma’s own health for a paragraph. Mr. Weston, warm with his own hospitality, announced news: his son — a son by a first marriage, brought up by rich relations named Churchill in Yorkshire, four-and-twenty, never yet seen in Highbury — is expected at last in January. Frank Churchill: a name the village has polished for years against his arrival.`)+
+  p(`Then somebody looked out of the window and said <em>snow</em>; and Mr. Woodhouse was not to be kept in his chair after that. In the flurry of wraps and lanterns Mr. John Knightley absently handed his wife into the first carriage and stepped in after her — leaving the second to fill as it might.`),
+ choices:()=>[
+  {l:"Keep near her father through the leave-taking; his nerves will want managing.",to:"n13",mk:"papa"},
+  {l:"Give the last of the evening to Mr. Weston’s news, and be handed in when the carriage comes round.",to:"n13",mk:"news"}]},
+
+n13:{date:"the same night · the carriage",text:()=>
+  p(`The second carriage received Miss Woodhouse; the door was shut on her; and she perceived that Mr. Elton was in it. Scarcely had the horses turned into Vicarage Lane when he seized her hand and was making violent love to her — hoping, fearing, adoring, ready to die if she refused him.`)+
+  p(`It was the wine, of course. Mr. Weston’s good wine; he did not know what he said; to-morrow he would be sick with apologizing.`)+
+  fl(`But Mr. Elton had only drunk wine enough to elevate his spirits, not at all to confuse his intellects.`)+
+  p(`Then it was some message meant for Harriet, strangely delivered — and to Harriet she referred him, with the last steadiness in the carriage. What came back closed every door at once:`)+
+  fl(`“Miss Smith!—I never thought of Miss Smith in the whole course of my existence—never paid her any attentions, but as your friend: never cared whether she were dead or alive, but as your friend.”`)+
+  p(S.f.martin
+    ?`So the sighing at the pianoforte, the fetched shawls, the raptures — all of it had been aimed at Hartfield, and she had let it play about her like weather. They reached the vicarage in angry silence.`
+    :(S.rec.f9
+      ?`The charade lay in the riddle-book at home, fair-copied in her own hand — <em>thy ready wit</em> — with her own “Humph” recorded under it. There are pages one writes and declines to read. They reached the vicarage in angry silence.`
+      :`Every evidence there had been, she had spent on Harriet’s behalf without once counting it; there was nothing on any page in her hand to reread, which was somehow worse. They reached the vicarage in angry silence.`))+
+  ledger(false)+
+  fl(`It was a wretched business indeed!—Such an overthrow of every thing she had been wishing for!… she had taken up the idea, she supposed, and made every thing bend to it.`),
+ choices:()=>[
+  {l:"Pass the sleepless part of the night on Mr. Elton’s presumption.",to:S.f.martin?"n15":"n14",mk:"anger"},
+  {l:"Pass it on her own eyesight, which is the harder subject.",to:S.f.martin?"n15":"n14",mk:"shame"}]},
+
+n14:{date:"the year’s last days",text:()=>
+  p(`Snow shut the roads over Christmas; Mr. Elton removed himself to Bath by note. There remained the visit to Mrs. Goddard’s, and the sentence — “Mr. Elton is not to be thought of” — that must be said to a face made for believing.`),
+ choices:()=>[
+  {l:"Tell it plainly, and take the whole blame into her own lap.",to:"n15",mk:"blame"},
+  {l:"Tell it gently, and let Bath and absence do the heavier half.",to:"n15",mk:"gentle"}]},
+
+/* ———— ACT II · JANUARY TO MAY ———— */
+
+n15:{date:"january",text:()=>
+  p((S.mark==="blame")
+    ?`Harriet cried, and blamed nobody, which was its own punishment. January brought Highbury a new subject, mercifully.`
+    :`January brought Highbury a new subject, mercifully.`)+
+  p(`Jane Fairfax is come to her grandmother’s. She is the orphan niece of the Bates household — old Mrs. Bates, and Miss Bates her unmarried daughter, the most talking and least fortunate woman in the parish — bred up from childhood by a Colonel Campbell in London, given every elegance and no money. The Campbells are gone to Ireland to a married daughter, one Mrs. Dixon; Jane, at one-and-twenty, is come to Highbury instead — before what her friends call, delicately, her establishment: a governess-post, when one must be borne.`)+
+  fl(`With the fortitude of a devoted novitiate, she had resolved at one-and-twenty to complete the sacrifice, and retire from all the pleasures of life, of rational intercourse, equal society, peace and hope, to penance and mortification for ever.`)+
+  p(`Jane Fairfax is very elegant — remarkably elegant — and reserved to the point of provocation. A reserve like that is a door shut in the caller’s face; one naturally wonders about the room.`),
+ choices:()=>[
+  {l:"Reserve is concealment: there is something behind the door she hides.",to:"n16",canon:true,mk:"hides"},
+  {l:"Reserve is the armour of poverty: pity it, and knock no further.",to:"n16",canon:false,mk:"armour",div:"at Jane Fairfax’s reserve, pitied instead of suspected"}]},
+
+n16:{date:"january · miss bates’s parlour",text:()=>
+  p(`A call at the Bateses’ cannot be escaped for ever, and Miss Bates was in possession of a letter. Jane’s own hand — to be read aloud entire, the moment it could be found. Meanwhile the paraphrase, at Miss Bates’s gallop: Weymouth in the autumn — the Campbells and the Dixons all together there — a water-party, and Jane all but swept into the sea, and caught, in the very act of falling, by Mr. Dixon — such presence of mind! — and now Mrs. Dixon so pressing for Jane to come to Ireland, and Jane declining, actually declining, preferring Highbury and her grandmother.`)+
+  fl(`At this moment, an ingenious and animating suspicion entering Emma’s brain with regard to Jane Fairfax, this charming Mr. Dixon, and the not going to Ireland, she said, with the insidious design of farther discovery…`)+
+  p(`The letter itself was still being looked for among the spectacles and the spencer. There is always a moment, at the Bateses’, when the door is nearer than the chair.`),
+ choices:()=>[
+  {l:"Recollect an engagement pleasanter than the parlour; the paraphrase has given every thing needful.",to:"n17",canon:true,mk:"escaped",set:()=>{S.f.vJ=true;}},
+  {l:"Stay for the letter itself, and hear what Jane says in her own words.",to:"n17",canon:false,mk:"stayed",set:()=>{S.rec.f15=1;},div:"in Miss Bates’s parlour, when the letter itself was stayed for"}]},
+
+n17:{date:"february",text:()=>
+  (S.mark==="stayed"
+    ? p(`The letter was found, and read, and was — a letter: quiet, exact, affectionate, and not one sentence of it about Mr. Dixon beyond the civil. What it said of Ireland the record keeps in the author’s own words:`)+
+      fl(`With regard to her not accompanying them to Ireland, her account to her aunt contained nothing but truth, though there might be some truths not told.`)+
+      p(`Truths not told. The phrase stayed longer than the hour did. — And then February came, and with it, at very long last:`)
+    : p(`February came, and with it, at very long last:`))+
+  p(`Frank Churchill. At Randalls by his father’s fire, at Hartfield within the day: handsome, quick, warm, with the address of a man who has decided to be delighted with everything and begun with his company. He was very much what the name had promised. On his first full day he paid his respects to the Bates household — an old Weymouth acquaintance, Miss Fairfax, civility required no less — and gave this account of it on the morrow’s walk:`)+
+  fl(`“Ten minutes would have been all that was necessary… I found, when he joined me there at last, that I had been actually sitting with them very nearly three-quarters of an hour.”`),
+ choices:()=>[
+  {l:"A duty-call prettily performed; his manners are exactly what a young man’s ought to be.",to:"n18",canon:true,mk:"pretty"},
+  {l:"Three-quarters of an hour is a long ten minutes; note it, and say nothing.",to:"n18",canon:false,mk:"noted",div:"at Frank Churchill’s first long morning in the Bates parlour, duly noted"}]},
+
+n18:{date:"february · sixteen miles",text:()=>
+  p(`Gone to London — for a haircut. A chaise sent for at breakfast, sixteen miles there and sixteen back, to be barbered.`)+
+  fl(`There was certainly no harm in his travelling sixteen miles twice over on such an errand; but there was an air of foppery and nonsense in it which she could not approve.`),
+ choices:()=>[
+  {l:"Foppery — and how well it becomes him; a little extravagance sits gracefully on such spirits.",to:"n19",canon:true,mk:"fop"},
+  {l:"An errand that does not add up; put it by, unexplained, and keep the sum open.",to:"n19",canon:false,mk:"sum",div:"over the sixteen-mile haircut, left as a sum that would not close"}]},
+
+n19:{date:"february · the coles’ dinner",text:()=>
+  p(`At the Coles’ dinner the news broke with the fish: a pianoforte — a very elegant one, from Broadwood’s — delivered the day before at the Bateses’, addressed to Miss Fairfax, sender unnamed. Delivered, it might have been added, while Mr. Frank Churchill was sixteen miles away being barbered; but nobody added it. Colonel Campbell was everybody’s first construction, and an unnamed giver is a blank page, and blank pages are an invitation.`)+
+  p(`Later, over coffee, Mrs. Weston drew Emma aside with a construction of her own: had she never thought — Mr. Knightley and Jane Fairfax? He had sent his carriage for her; he admires her; the Abbey wants a mistress. The reply was immediate, and loud enough to be regretted:`)+
+  fl(`“Mr. Knightley and Jane Fairfax!… Mr. Knightley must not marry!—You would not have little Henry cut out from Donwell?”`)+
+  p(`Little Henry — Isabella’s eldest, heir to the Abbey if his uncle dies single — was a very serviceable nephew that evening. The vehemence was all on his account, naturally. As for the pianoforte, Mr. Frank Churchill was at her elbow, asking with his eyes to be told what to think.`),
+ choices:()=>[
+  {l:"Colonel Campbell, surely; guardians give instruments, and there is no story in it.",to:"n20",canon:false,mk:"campbell",div:"at the pianoforte, credited plainly to Colonel Campbell"},
+  {l:"Mr. Dixon — oh, it is delicious — and whisper the delicious thought to Mr. Churchill.",to:"n20",canon:true,mk:"dixon",set:()=>{S.f.flirt=true;}},
+  ...(!S.f.vJ?[{l:"Someone who was at Weymouth — hold the thought, name nobody, and watch.",to:"n20",canon:false,mk:"weymouth",div:"at the pianoforte, traced no further than Weymouth and left unnamed"}]:[])]},
+
+n20:{date:"the same evening",text:()=>
+  p(S.mark==="dixon"
+    ?`He took the theory up like a present, improved it, returned it gilt. Two people now knew what was what. — Then music: Emma sang, was much applauded; Frank sang with Miss Fairfax till Mr. Knightley, watching, said her voice would be worn out.`
+    :`Music, then: Emma sang, was much applauded; Frank sang with Miss Fairfax till Mr. Knightley, watching from the fire, said her voice would be worn out.`),
+ choices:()=>[
+  {l:"Rest her eyes on the singers, where the entertainment is.",to:"n21",mk:"singers"},
+  {l:"Rest them on Mr. Knightley watching the singers, which is another entertainment.",to:"n21",mk:"watcher"}]},
+
+n21:{date:"february’s end",text:()=>
+  p(`A fortnight of Frank Churchill — a ball planned at the Crown on his motion, the rooms paced out, the sets half-drawn — and then a summons: Mrs. Churchill, the aunt whose word is Yorkshire law, unwell and wanting him. He came to Hartfield to take leave, out of spirits, out of sentences; and at the door of going, this:`)+
+  fl(`“In short, perhaps, Miss Woodhouse—I think you can hardly be quite without suspicion”—`)+
+  p(`His father’s step on the stair ended it. He was gone by dinner. What a sentence like that was going to say, any woman may finish for herself; the ball went with him, postponed to no date.`)+
+  fl(`“I do not find myself making any use of the word <em>sacrifice</em>,” said Emma.`)+
+  p(`So ran the private audit, some days after: much regard, some flatness of mornings — but no sacrifice in any letter of it. Not very much in love, then; and the discovery cost so little that it rather proved itself. The vacancy he left was assigned, in due course, elsewhere — for a heart like Harriet’s must be loving something.`),
+ choices:()=>[
+  {l:"He was on the edge of a declaration — to her; the interruption alone prevented it.",to:"n22",canon:true,mk:"edge"},
+  {l:"He was on the edge of something; the object is not proven, and the sentence stays broken.",to:"n22",canon:false,mk:"broken",div:"at the broken sentence, left broken"}]},
+
+n22:{date:"april",text:()=>
+  p(`Mr. Elton returned from Bath with a wife: Augusta, born Hawkins, ten thousand pounds, a brother-in-law near Bristol with two carriages and a place called Maple Grove of which Highbury was now to hear daily. She called Mr. Knightley “Knightley” within the quarter-hour, and Emma “Emma” never twice. And she took up Jane Fairfax — patronage at the full gallop: positions inquired after, introductions promised, no denial taken.`)+
+  p(`Jane submitted to it. Jane — elegant Jane — walked to the post-office in the rain and let Mrs. Elton scold her for it${S.f.vJ?"; some natures must be busy about something":""}.`)+
+  fl(`“The post-office has a great charm at one period of our lives.”`)+
+  (S.f.vJ
+    ? p(`So she said, prettily enough, when the walking was wondered at — the sort of ornament people hang on a dull errand. On the subject of her establishment she was worse than an ornament; asked kindly about the governess-trade, she produced something about offices for the sale of human intellect that made Mrs. Elton cry out, and was surely more clever than it needed to be.`)
+    : p(`So she said of her rain-walks, and would not be argued out of them; her letters, whoever wrote them, were worth wet feet. And asked kindly about her establishment, she answered with a sentence that did not sound like a governess speaking of a situation:`)+
+      fl(`“…offices for the sale—not quite of human flesh—but of human intellect.”`))+
+  p(`Why does Jane Fairfax stay in Highbury, under such patronage, when Ireland is open and the Campbells write every week?`),
+ choices:()=>[
+  {l:"Penance: some Irish memory is being expiated at her grandmother’s fireside.",to:"n23",canon:true,mk:"penance"},
+  {l:"Poverty: she stays because staying is what she can afford.",to:"n23",canon:false,mk:"poverty",div:"over Jane at the post-office, explained by poverty and let alone"},
+  ...(!S.f.vJ?[{l:"She stays at a price, and pays it daily — ask what in Highbury is worth that to her.",to:"n23",canon:false,mk:"price",div:"over Jane’s staying in Highbury, asked as a question with an answer"}]:[])]},
+
+n23:{date:"may · the crown",text:()=>
+  p(`Mrs. Churchill removed to Richmond for her health, and Richmond is nine miles: the ball at the Crown was revived, and in May it was danced. Frank Churchill secured Emma’s first two dances and her conversation between them; the room was warm, the fiddles good, Miss Bates grateful to everything from the door onward.`)+
+  (S.f.martin
+    ? p(`The Eltons came late and condescended early; the bride’s eye measured the room and found only herself in it. Mr. Knightley — who is not a dancing man, and says so — danced once notwithstanding, dutifully and well, with the young bride of Abbey-Mill, there under the Coles’ wing; kindness in plain clothes. Afterwards, in the cool of the passage, he came to stand by Emma.`)
+    : p(`And Harriet stood disengaged; and Mrs. Weston, kind soul, prompted Mr. Elton toward her; and Mr. Elton, in the hearing of half the set, discovered that his dancing days were over — “You will excuse me, Mrs. Weston” — and strolled to the card-room smiling at his wife. Harriet’s face did what such faces do. Then: —`))+
+  (S.f.martin?"":fl(`In another moment a happier sight caught her;—Mr. Knightley leading Harriet to the set!—Never had she been more surprized, seldom more delighted, than at that instant.`)+
+  p(`Afterwards, in the cool of the passage, he came to stand by her.`))+
+  fl(`“Whom are you going to dance with?” asked Mr. Knightley.<br>She hesitated a moment, and then replied, “With you, if you will ask me.”<br>“Will you?” said he, offering his hand.<br>“Indeed I will. You have shewn that you can dance, and you know we are not really so much brother and sister as to make it at all improper.”<br>“Brother and sister! no, indeed.”`),
+ choices:()=>[
+  {l:"The glow of the evening is gratitude — on Harriet’s behalf, and nothing more.",to:S.f.martin?"n25":"n24",canon:true,mk:"gratitude"},
+  {l:"The glow bears no name yet; let it keep none, and last a little.",to:S.f.martin?"n25":"n24",canon:false,mk:"glow",div:"in the passage at the Crown, when the glow was allowed to go nameless"}]},
+
+n24:{date:"the morning after the ball",text:()=>
+  p(`Harriet and another parlour-boarder, walking the Richmond road early, were set upon by a party of gipsy children begging; the other girl ran; Harriet, cramped with dancing, could not, gave her purse, was surrounded and terrified — and was found so by Frank Churchill, who happened along the same road, dispersed the beggars with a look, and carried her, half-fainting, into Hartfield on his arm.`)+
+  fl(`Could a linguist, could a grammarian, could even a mathematician have seen what she did… without feeling that circumstances had been at work to make them peculiarly interesting to each other?—How much more must an imaginist, like herself, be on fire with speculation and foresight!`)+
+  p(`Nothing would be <em>done</em>, of course. The Elton lesson was learnt: no scheming, no forwarding, not a finger lifted. But foreseeing is not scheming; a mere wish is not a plan; and there they were, thrown together by the very road.`),
+ choices:()=>[
+  {l:"Note how naturally Frank Churchill and Harriet compose a picture — plan nothing; merely foresee.",to:"n25",canon:true,mk:"foresee"},
+  {l:"Resolve to imagine nothing this time — and mean the resolution.",to:"n25",canon:false,mk:"nothing",div:"after the gipsies, when imagining was truly forsworn"}]},
+
+n25:{date:"may · hartfield",text:()=>S.f.martin
+  ? p(`Mrs. Weston, calling in May, went round once more to her winter theory — Mr. Knightley and Jane Fairfax: he had sent broth to the Bateses, and his carriage again; “mark my words, Emma.” The words sat in the room like an open window in March. There is a way of examining such an idea, and a way of declining to; and the declining can be done so gracefully — burnt children, fireside prudence, no more match-making at Hartfield — that it looks like virtue itself.`)
+  : p(`Harriet came one morning with a small parcel she wished to burn: “Most precious treasures,” she called them — a scrap of court-plaister Mr. Elton had once handled, the stub of his pencil. Into the fire they went, and out of the silence after came a confession: she should never marry — because — the person she could think of now was so infinitely superior — but it was a pleasure to admire him at a distance, in gratitude for what he had done for her.`)+
+    fl(`“Service! oh! it was such an inexpressible obligation!—The very recollection of it, and all that I felt at the time—when I saw him coming—his noble look—and my wretchedness before. Such a change! In one moment such a change! From perfect misery to perfect happiness!”`)+
+    p(`The service. The rescue. Who could mistake it? — And yet names had burnt this house once already, and there was a proverb now at Hartfield about naming.`),
+ choices:()=>S.f.martin?[
+  {l:"Decline to name or examine the idea; Hartfield is done with other people’s destinies.",to:"n26",canon:true,mk:"pact",set:()=>{S.f.vH=true;}},
+  {l:"Press Mrs. Weston: what has Mr. Knightley said or done, that grounds it?",to:"n26",canon:false,mk:"pressed",set:()=>{S.rec.f25=1;},div:"in May, when Mrs. Weston’s theory of Mr. Knightley was pressed to its grounds"}]:[
+  {l:"Propose the pact: let no name ever pass our lips; we were wrong before, and will be cautious now.",to:"n26",canon:true,mk:"pact",set:()=>{S.f.vH=true;}},
+  {l:"Ask her plainly whom she means, and which service, before another word is said.",to:"n26",canon:false,mk:"asked",set:()=>{S.rec.f25=1;},div:"at the burning of the treasures, when the name was asked for plainly"}]},
+
+n26:{date:"june",text:()=>
+  (S.mark==="asked"
+    ? p(`She was asked plainly, and plainly answered — and the answer was not the Richmond road:`)+
+      fl(`“Mr. Knightley’s coming and asking me to dance, when Mr. Elton would not stand up with me; and when there was no other partner in the room… that was the service which made me begin to feel how superior he was to every other being upon earth.”`)+
+      p(`Mr. Knightley. It was written down, so to speak, whether one wished it written or no; and the caution given her — think of the disparity, be observant, expect nothing — was as fair as such caution ever is. June opened upon Hartfield with that entry standing.`)
+    : (S.mark==="pressed"
+      ? p(`Mrs. Weston, pressed, had grounds thinner than her smile — broth, a carriage, a look at the Abbey — but the pressing itself left a mark: the idea of Mr. Knightley marrying had now been examined, and examination is a door that does not quite shut. June opened upon Hartfield.`)
+      : p(`${S.f.vH&&!S.f.martin?"The pact was made, and sealed with the ashes; whatever was hoped at Mrs. Goddard’s would grow now in the dark, unwatered by any question. ":""}June opened upon Hartfield.`)))+
+  p(`An evening party there heard Frank Churchill, over from Richmond, wonder aloud what had become of Mr. Perry’s plan of setting up his carriage — a plan known, it developed amid general astonishment, to nobody in Highbury but the Bates household, by whom it had been kept a close secret. A dream, Frank concluded, laughing; he must have dreamt it. Afterwards, at the round table, he pushed a word made of the children’s alphabets across to Miss Fairfax. The word was <em>blunder</em>, and a blush answered it.`)+
+  fl(`Mr. Knightley… began to suspect him of some inclination to trifle with Jane Fairfax.`),
+ choices:()=>{
+  const c=[{l:"A blunder of Frank’s lively dreaming, as he says himself; the table laughed, and rightly.",to:"n27",canon:true,mk:"dream"}];
+  if(!S.f.vJ) c.push({l:"A message, and not to her: watch Jane’s face, not his, the rest of the evening.",to:"n27",canon:false,mk:"message",div:"at the alphabets, when Jane’s face was watched instead of Frank’s"});
+  else c.push({l:"Take the alphabets and make a word for the table’s easier amusement.",to:"n27",mk:"word"});
+  return c;}},
+
+n27:{date:"midsummer · donwell",text:()=>
+  p(`Mr. Knightley gave a morning to Donwell: strawberries, the best fruit in England, Mrs. Elton in a large bonnet directing the picking of them until the sun directed her to a bench. The Abbey wore its age well, and Emma, walking its rooms and avenues, found herself proud of it in a proprietary way she did not examine — family pride, of a sort; Isabella’s children’s inheritance, no doubt.`)+
+  p(`Two things jarred the day. Jane Fairfax, pressed past bearing by Mrs. Elton’s placements and promises, left early, alone, on foot in the heat, and for one unguarded moment said why:`)+
+  fl(`“Oh! Miss Woodhouse, the comfort of being sometimes alone!”—seemed to burst from an overcharged heart…`)+
+  p(`And Frank Churchill, due at noon, arrived near two, hot and cross from Richmond, wished himself in Switzerland, declared himself sick of England, and was a full half-hour recovering his own agreeableness.`),
+ choices:()=>{
+  const c=[{l:"The heat explains Jane, and Mrs. Churchill explains Frank; a hot June needs no other causes.",to:"n28",canon:true,mk:"heat"}];
+  if(!S.f.vJ) c.push({l:"Two tempers, one cause: hold Jane’s flight and Frank’s crossness side by side.",to:"n28",canon:false,mk:"onecause",div:"at Donwell, when Jane’s flight and Frank’s temper were held side by side"});
+  else c.push({l:"Walk the lime avenue once more with her father before the carriage.",to:"n28",mk:"limes"});
+  return c;}},
+
+n28:{date:"the next day · box hill",text:()=>
+  p(`Box Hill, the morrow, seven miles of party got up for pleasure: the Eltons sulking at the Westons, the Westons mediating, Jane silent, Mr. Knightley grave — and Frank Churchill, yesterday’s temper inverted, now gallant to excess, and all of it laid at one shrine.`)+
+  (S.f.flirt
+    ? fl(`“Mr. Frank Churchill and Miss Woodhouse flirted together excessively.” They were laying themselves open to that very phrase—and to having it sent off in a letter to Maple Grove by one lady, to Ireland by another.`)
+    : p(`His gallantry was received rather than returned; but a shrine cannot help where the incense drifts, and the party read what parties read.`))+
+  p(`Idleness curdling, Frank announced that Miss Woodhouse demanded entertainment:`)+
+  fl(`“…she only demands from each of you either one thing very clever, be it prose or verse, original or repeated—or two things moderately clever—or three things very dull indeed, and she engages to laugh heartily at them all.”`)+
+  fl(`“Oh! very well,” exclaimed Miss Bates, “then I need not be uneasy. ‘Three things very dull indeed.’ That will just do for me, you know. I shall be sure to say three dull things as soon as ever I open my mouth, shan’t I?”`)+
+  p(`The opening stood there, round and shining, asking to be hit. Emma could not resist —`),
+ choices:()=>{
+  const c=[{l:"“Ah! ma’am, but there may be a difficulty. Pardon me—but you will be limited as to number—only three at once.”",to:"n29",canon:true,mk:"insult"}];
+  if(!S.f.flirt) c.push({l:"Let the opening pass; agree to Miss Bates’s three dull things, and laugh with her, not at her.",to:"n29",canon:false,mk:"spared",div:"on Box Hill, when the shining opening was let pass"});
+  return c;}},
+
+n29:{date:"the morrow",text:()=>
+  (S.mark==="insult"
+    ? p(`Miss Bates did not immediately catch it; then it burst on her, and a slight blush shewed that it could pain her. — “I will try to hold my tongue. I must make myself very disagreeable, or she would not have said such a thing to an old friend.” — The afternoon died of it by inches. At the carriages, Mr. Knightley came to hand her in, and did not.`)+
+      fl(`“How could you be so unfeeling to Miss Bates?… She is poor; she has sunk from the comforts she was born to; and, if she live to old age, must probably sink more. Her situation should secure your compassion. It was badly done, indeed!”`)+
+      p(`The drive home was tears, and the night was worse. Whatever else the morrow held, it must begin at the Bates door.`)
+    : p(`The party died anyway, of its own vapours — the Eltons’ sulks, Jane’s silence, Frank’s glitter; pleasure had been ordered and did not come. But the restlessness Emma carried home was her own: a season of readings and managings pressing on her like the weather, wanting some act to discharge it. The morrow must begin somewhere; the Bates door was, as ever, the door most owed.`))+
+  p(`She was received; Jane was not to be seen — not well, keeping her room, the sound of retreat on the stair. And Miss Bates, all flutter and gratitude${S.mark==="insult"?" — as if the hill had never happened, which was the worst of it":""}, poured out the news: it is all settled — settled since the evening of Box Hill day itself — Jane has accepted a situation. A governess-post.`)+
+  fl(`“…yesterday evening it was all settled that Jane should go… upon thinking over the advantages of Mrs. Smallridge’s situation, she had come to the resolution of accepting it.”`),
+ choices:()=>{
+  const c=[{l:"Sit with Miss Bates the full hour, and begin the long repayment.",to:"n30",canon:true,mk:"penance"}];
+  if(veils()<=1) c.push({l:"The sea. Take Papa, take a house by Michaelmas — she has never seen it, and Highbury has seen too much of her.",to:"sA1",canon:false,div:"the morning after Box Hill, when the sea was chosen over the parlour"});
+  return c;}},
+
+n30:{date:"june the twenty-sixth · richmond",text:()=>
+  p(`An express from Richmond: Mrs. Churchill is dead — actually, unanswerably dead, and her illnesses all promoted, overnight, to sincerity.`)+
+  fl(`Goldsmith tells us, that when lovely woman stoops to folly, she has nothing to do but to die; and when she stoops to be disagreeable, it is equally to be recommended as a clearer of ill-fame.`),
+ choices:()=>{
+  const c=[{l:"Write the proper note to Randalls, and let the season turn as it will.",to:"n31",canon:true}];
+  if(S.f.flirt&&!S.f.vJ) c.push({l:"Admit Frank Churchill’s strange request — a note, some days into the mourning, asking leave to call at Hartfield, alone.",to:"eB1",canon:false,div:"in the mourning-week, when Frank Churchill was received alone"});
+  return c;}},
+
+n31:{date:"july · randalls",text:()=>
+  p(`Ten days on, Mrs. Weston, pale with her errand, had something to tell: Frank had been at Randalls that morning, to announce — an attachment — more than an attachment —`)+
+  fl(`“…an engagement—a positive engagement.—What will you say, Emma—what will any body say, when it is known that Frank Churchill and Miss Fairfax are engaged;—nay, that they have been long engaged!”`)+
+  fl(`“Jane Fairfax!—Good God! You are not serious? You do not mean it?”`)+
+  p(`Since October. Formed at Weymouth. Kept from every creature — through the winter, through the spring, through every duet and every alphabet.`)+
+  (S.f.vJ
+    ? p(`For a long moment the thing simply refused to fit — some error, some other Fairfax, the thing was not possible — the winter’s whole architecture groaning like a house in wind before it went. There had been a letter once, in that parlour, offered for the hearing entire, and pleasanter engagements had been recollected. What it might have shewn, there was now no knowing; the not-knowing had been purchased, and this was the delivery.`)
+    : p(`And the record, reread, had held it all along, in the author’s own hand: <em>some truths not told</em>. A long call that would not end; sixteen miles for a haircut; a word pushed across a table; a heart overcharged in the Donwell heat. The shame of the morning was not ignorance. It was rereading.`))+
+  p(`One thought, through all of it, ran ahead of the rest${S.f.martin?"":(S.rec.f25?" — and it was not, strangely, of the engaged couple at all":" — poor Harriet")}.`),
+ choices:()=>[
+  {l:"Assure Mrs. Weston she is heart-whole herself — whatever Highbury has supposed, attachment there was none.",to:"n32",canon:true,mk:"heartwhole"},
+  {l:"Ask only this: since October — all winter — and require the confirmation twice.",to:"n32",canon:false,mk:"confirm",div:"at Randalls, when the news was made to say itself twice"}]},
+
+n32:{date:"days later",text:()=>S.f.martin
+  ? p(`Mrs. Weston, come again with the settling dust, returned once more — gently, speculatively, as one arranging chairs — to her old theory, now half the village’s: with Frank disposed of, would not Mr. Knightley and Jane… before the Campbells claim her… the Abbey wanting a mistress…`)+
+    p(`Emma’s eyes were on her needle. Mr. Knightley and Jane Fairfax. Mr. Knightley married. The Abbey lit for a bride.`)+
+    fl(`It darted through her, with the speed of an arrow, that Mr. Knightley must marry no one but herself!`)+
+    (S.f.vH
+      ? p(`There had been a spring morning when this idea stood in the room and was declined — not examined, declined; Hartfield was done with destinies. The blindness since had been home-made, on purpose, to a pattern of her own choosing.`)
+      : p(`The idea had been pressed once, in May, to its thin grounds, and had never quite left the house since; examination is a door that does not shut. Through it, now, this.`))
+  : (S.rec.f25
+      ? p(`Harriet must hear the news from Hartfield before the village served it cold; that much was owed. She heard it almost tranquilly — Mr. Frank Churchill was nothing to her, as Hartfield had known since May — and then, colouring, came back to the name that had been given once in her parlour and never touched since. Now — now that every thing was overturned, and gentlemen married where they chose — was it not possible to hope a little more? She talked on, of encouragement, of notice, of a hope of return; and every instance she produced was true, and had been standing on the record like a debt unread.`)
+      : p(`Harriet must hear the news from Hartfield before the village served it cold; that much was owed. She heard it — and was not overthrown. She smiled. Mr. Frank Churchill, married or single, was nothing to her; had Miss Woodhouse really supposed —? Surely the pact had not been <em>mistaken</em> — not the gipsies at all. The ball. Mr. Elton’s refusal, and the gentleman who came and asked her to dance when no one else would. The pact had kept the name out of every conversation since; it had kept it, all this time, growing.`))+
+    fl(`It darted through her, with the speed of an arrow, that Mr. Knightley must marry no one but herself!`),
+ choices:()=>S.f.martin?[
+  {l:"Finish the visit upright; give Mrs. Weston nothing but needlework.",to:"n33",mk:"upright"},
+  {l:"Plead her father’s tea, and be alone with what has darted.",to:"n33",mk:"alone"}]:[
+  {l:"Sit with Harriet to the end of the interview, whatever it costs the face.",to:"n33",mk:"upright"},
+  {l:"Plead her father’s tea, and be alone with what has darted.",to:"n33",mk:"alone"}]},
+
+n33:{date:"that night",text:()=>
+  fl(`She saw it all with a clearness which had never blessed her before.`)+
+  fl(`With insufferable vanity had she believed herself in the secret of every body’s feelings; with unpardonable arrogance proposed to arrange every body’s destiny.`)+
+  p(`The candle burnt late over the riddle-book, and over the leaf at the back where the matches were kept. It read, that night, as follows:`)+
+  ledger(true)+
+  p(`Cold rain the next day, and the day after; Mr. Knightley away at his brother’s in London, and Hartfield very silent; July looking like the approaching winter.`),
+ choices:()=>[
+  {l:"Keep the vigil until the weather and the worst of it pass.",to:"n34",mk:"vigil"},
+  {l:"Resolve on to-morrow’s conduct: whatever comes, Harriet shall be got to Brunswick Square, and spared the sight of it.",to:"n34",mk:"resolve"}]},
+
+n34:{date:"july · after the rain",text:()=>
+  p(`The weather turned; the sun came back an hour before evening; and Emma, walking the shrubbery to be out of doors, saw Mr. Knightley come through the garden door — ridden from London that morning, through the last of the rain. They walked. He was silent; then not: he had heard of Frank Churchill’s engagement; he was anxious for her — as a friend — he would give a great deal to be able to say more —`)+
+  p(`He was about to speak. It could be heard coming, the way weather can.`),
+ choices:()=>[
+  {l:"Walk on with him; and when he speaks, answer with the whole truth of her heart.",to:"n35",canon:true},
+  {l:"Stop him before he speaks — her father, Hartfield, the vow of years: she has always said she would never marry.",
+   to:()=> veils()>=2 ? "pP1" : (S.f.martin ? "endAM" : "endHA"),
+   canon:false,div:"in the shrubbery, when Mr. Knightley was stopped before he could speak"}]},
+
+/* ———— THE CANON ENDGAME ———— */
+
+n35:{date:"the shrubbery",sp:true,text:()=>
+  p(`What she said to stop herself stopping him — what he answered — the chronicle here gives up its office; the author’s hand takes the page entire.`)+
+  fl(`“My dearest Emma,” said he, “for dearest you will always be, whatever the event of this hour’s conversation, my dearest, most beloved Emma—tell me at once. Say ‘No,’ if it is to be said.”—She could really say nothing.—“You are silent,” he cried, with great animation; “absolutely silent! at present I ask no more.”`)+
+  fl(`“I cannot make speeches, Emma:” he soon resumed; and in a tone of such sincere, decided, intelligible tenderness as was tolerably convincing.—“If I loved you less, I might be able to talk about it more. But you know what I am.—You hear nothing but truth from me.—I have blamed you, and lectured you, and you have borne it as no other woman in England would have borne it.… At present, I ask only to hear, once to hear your voice.”`)+
+  fl(`She spoke then, on being so entreated.—What did she say?—Just what she ought, of course. A lady always does.`),
+ choices:()=>[{l:"(the chapter turns)",to:"n36"}],bare:true},
+
+n36:{date:"september · michaelmas again",sp:true,text:()=>
+  p(`The rest the reader may have in the author’s compression, which no other can better. Frank Churchill sent from Windsor a letter of handsome length and handsomer apology — the pianoforte his, the Dixon jest encouraged for cover${S.f.flirt?", the flirtation borrowed as a blind and returned with thanks":""} — and was forgiven by everybody it profited to forgive him. ${S.f.martin?"At Abbey-Mill the harvest came in over a contented household; Mrs. Robert Martin’s happiness had by now the settled look of a year’s wear.":"Harriet, sent to Brunswick Square, was met there by Robert Martin, carrying a parcel; and the second asking prospered where the first had been managed. She proved, in the event, the daughter of a tradesman — which blood Mr. Elton’s parsonage may make what it can of."} Jane Fairfax was released from the schoolroom she never reached. And a pilfering of poultry-houses persuaded Mr. Woodhouse that a son-in-law in the house was a domestic security: the wedding could be fixed.`),
+ choices:()=>[{l:"(the chapter turns)",to:"endUNION"}],bare:true},
+
+/* ———— CORRIDOR α · THE SEA ———— */
+
+sA1:{date:"july · the campaign",text:()=>
+  p(`It could not be done — which is to say, it took eleven days. Perry was consulted, and Perry, finding his patient’s daughter immovable, discovered that sea-air, <em>rightly managed</em>, had cured more nerves than it ever chilled; and against Perry, Mr. Woodhouse has no artillery. The house in Weymouth was taken to Michaelmas. Isabella wrote twice to say it could not be intended; Mr. Knightley came, heard the scheme through, and said only that Weymouth was a long way from Donwell — which was not opposition, and was not nothing.`),
+ choices:()=>[
+  {l:"Answer him: the distance is half the physic.",to:"sA2",mk:"physic"},
+  {l:"Answer nothing; the trunks are corded.",to:"sA2",mk:"corded"}]},
+
+sA2:{date:"the road out",frag:true,text:()=>
+  p(`Of the journey the chronicle keeps little. Two days on the road; Mr. Woodhouse surviving each stage he had despaired of; and at the last hill —`)+
+  p(`the sea. <span class="lacuna">[…]</span> first sight of it from the chaise window, and the page it was written on lost.`),
+ choices:()=>[
+  {l:"Take her father straight to the lodgings and the fire.",to:"sA3"},
+  {l:"Stand on the esplanade first, ten minutes, in the wind.",to:"sA3"}]},
+
+sA3:{date:"august · the esplanade",frag:true,text:()=>
+  p(`The Weymouth weeks. Bathing-machines Mr. Woodhouse would inspect and never enter; a subscription taken at the rooms; and an acquaintance made on nobody’s introduction — a Mrs. Anning, widow of a half-pay captain, sensible, weathered, sixty, who has buried a husband in one ocean and two sons’ prospects in another, and talks of both without ornament. Conversation with her is a new climate: nothing to manage, nothing to read into, nobody’s destiny arrangeable.`)+
+  p(`Highbury writes. Miss Bates’s letters are four pages crossed; the news swims in them like weed. <span class="lacuna">[…]</span>`),
+ choices:()=>[
+  {l:"Answer Miss Bates by return, at length, for the first time in her life.",to:"sA4",mk:"return"},
+  {l:"Let the letters wait on the tide-table.",to:"sA4",mk:"tide"}]},
+
+sA4:{date:"september · news from home",frag:true,text:()=>
+  p(`The Highbury sensation arrived garbled, in three instalments: young Churchill engaged all along — to the Fairfax girl — no, married; the aunt dead; the Eltons taking it variously ill. Heard at this distance, on this wind, it was a story about acquaintances: surprising, and then, by supper, not. <span class="lacuna">[…]</span> a bill of lading, a subscription list, and a note in another hand: <em>the Abbey’s master has been twice to London this month; the roads are very indifferent.</em>`),
+ choices:()=>[
+  {l:"Read the note twice, and put it in the workbox.",to:"sA5",mk:"twice"},
+  {l:"File it with Miss Bates’s weed.",to:"sA5",mk:"filed"}]},
+
+sA5:{date:"michaelmas · the winter house",text:()=>
+  p(`Michaelmas, and the lease’s end; and Mr. Woodhouse, marvellous to relate, does not ask for Hartfield. He has his walk, his gruel made to a new receipt he believes older, his Mrs. Anning to agree with him about draughts. The winter house is offered at terms. Somewhere inland the story she was written into goes on being told without its — without one of its persons; here there is salt on the glass, and no one has asked her to read anything but the tide-table since July.`),
+ choices:()=>[
+  {l:"Take the winter house.",to:"endSEA"},
+  {l:"Take the winter house, and write to Donwell that the roads mend in spring.",to:"endSEA",mk:"donwell"}]},
+
+/* ———— CORRIDOR β · ENSCOMBE ———— */
+
+eB1:{date:"july · in new mourning",text:()=>
+  p(`He came in black, and wore it like a colour that suited him. Grief, in the house of Churchill, had lasted the week; what was left was liberty, and it filled the room. He talked — too much, too well — of Enscombe, of his uncle’s helplessness, of years spent on approval; and then, quietly, of Weymouth: that there had been an entanglement there, and that it was over — ended by the lady, before ever the news from Richmond came. He said the word <em>governess</em> and let it lie on the carpet between them.`)+
+  p(`She knew it already, near enough; the letter in Miss Bates’s parlour had taught her where truths went untold. Knowing is not the same as being told by the man in mourning, at close range, alone.`),
+ choices:()=>[
+  {l:"Hear him out to the end of it.",to:"eB2",mk:"heard"},
+  {l:"Make him say the lady’s name before one more sentence.",to:"eB2",mk:"named"}]},
+
+eB2:{date:"the offer",text:()=>
+  p(`He came again in three days, and it was an offer — made with wit, made with feeling, made (this was the strange power of it) with open eyes: “You have known my worst since February, and laughed at it with me. I am done being managed; you were never manageable. Enscombe wants a mistress who can read a room; I want the only woman who ever read me and liked the book.” The whole winter’s flirtation stood behind him like a dowry.`)+
+  p(`One question remained, and it was the old question in new clothes: what is the true reading of Frank Churchill? A twelvemonth of evidence lay to hand — and evidence, she had cause to know, will bend.`),
+ choices:()=>[
+  {l:"Read him as the man his letter-writing self will one day claim to have been — and accept.",to:"eB3",mk:"wanted"},
+  {l:"Read him plainly — charming, unserious, twice-caught — and accept him as exactly that.",to:"eB3",mk:"plain"}]},
+
+eB3:{date:"the sensation",text:()=>
+  p(`Highbury took the news as a town takes weather off the sea: all at once, at every door. The Eltons called it of a piece; Miss Bates cried with happiness for want of a nearer occupation; Mr. Woodhouse could not be told for four days. Mr. Weston beamed and beamed and would not quite meet her eye.`)+
+  p(`Mr. Knightley came once. He stood by the fire, and said that he wished her — he stopped; began again; said that Enscombe was a long way, and that he was going to London for some time on business; and went. Of all the sentences of that year, the chronicle records this one entire because it was the shortest.`),
+ choices:()=>[
+  {l:"Follow him to the door with something — anything — of the old raillery.",to:"eB4",mk:"door"},
+  {l:"Let him go; some readings are best left untaken.",to:"eB4",mk:"let"}]},
+
+eB4:{date:"autumn · the remove",frag:true,text:()=>
+  p(`Married from Hartfield in October; papa provided for with Isabella’s summers and Perry’s winters, at a cost in persuasion the chronicle declines to total. Then the North. <span class="lacuna">[…]</span> of the first Enscombe winter there survive three letters and an inventory of plate. The house is very great. The neighbourhood calls. Frank is — Frank; the word does the work it always did.`),
+ choices:()=>[
+  {l:"Begin on the house: rooms, servants, dinners — a kingdom wants governing.",to:"eB5",mk:"govern"},
+  {l:"Begin on the husband: there must, somewhere in him, be a fixed point.",to:"eB5",mk:"husband"}]},
+
+eB5:{date:"winter · a name in the paper",frag:true,text:()=>
+  p(`In a London paper, at breakfast, among the arrivals at a Bristol house: <em>…and Miss Fairfax, governess in the family of Mrs. Smallridge of Maple Grove.</em> <span class="lacuna">[…]</span> He read it before she did; she watched him read it; and for once in his life his face was a page with nothing written on it at all. Then he passed her the marmalade, and was delightful straight through until dinner.`),
+ choices:()=>[
+  {l:"Say the name aloud once, across the breakfast-table, and watch.",to:"endENS",mk:"aloud"},
+  {l:"Fold the paper. Enscombe has a hundred rooms; one may be private.",to:"endENS",mk:"folded"}]},
+
+/* ———— CORRIDOR γ · THE PARLOUR ———— */
+
+pP1:{date:"the refusal’s winter",text:()=>
+  p(`He bore it like himself: one look she was long in forgetting, one “You are your own mistress, Emma; I have nothing to reproach you with,” and the garden door. The vow was kept, then, and the winter came to keep it with her. She had her reasons by heart, and recited them to the fire — her father, Hartfield, the settled plan of years — and the fire, like the chronicle, made no answer; neither of them was sure the reasons had ever been read all the way to the bottom.`),
+ choices:()=>[
+  {l:"Fill the house: dinners, whist, the Coles, the Perrys — noise enough to think in.",to:"pP2",mk:"fill"},
+  {l:"Thin the house: papa, the fire, the riddle-book. Quiet enough not to.",to:"pP2",mk:"thin"}]},
+
+pP2:{date:"the years at hartfield",frag:true,text:()=>
+  p(`Donwell’s master went more and more to London, and within the two years had half-settled at his brother’s; the Abbey was let of its society, if not of its farms. Highbury reshuffled itself as small places do. <span class="lacuna">[…]</span> the Eltons ascendant at every table; a new apothecary; the Bates parlour one flight nearer the street after old Mrs. Bates died. Miss Woodhouse of Hartfield was called handsome longer than most, and clever longer than that, and rich without qualification.`),
+ choices:()=>[
+  {l:"Keep the calls up, all of them, punctually.",to:"pP3",mk:"calls"},
+  {l:"Keep papa, chiefly; the village can call on her.",to:"pP3",mk:"papa"}]},
+
+pP3:{date:"the quiet house",frag:true,text:()=>
+  p(`Mr. Woodhouse went in the spring of the fourth year, easily, mid-sentence, expecting gruel. <span class="lacuna">[…]</span> The mourning filled a twelvemonth honestly. Hartfield was now hers outright, with thirty thousand pounds where her father’s cautious man of business had always kept it: in the London house of —— &amp; ——, as safe, the phrase then ran, as the Bank itself.`),
+ choices:()=>[
+  {l:"Leave every thing standing as he left it.",to:"pP4",mk:"standing"},
+  {l:"Ask, once, whether the money might not be moved to the funds.",to:"pP4",mk:"asked"}]},
+
+pP4:{date:"the house that stopped payment",frag:true,text:()=>
+  p(`${S.mark==="asked"?"The asking came to nothing; such houses do not fall, she was assured, and assurance was a reading she was practised in accepting. ":""}It stopped payment on a Tuesday in the sixth year, with three other houses behind it. <span class="lacuna">[…]</span> Hartfield let to strangers within the quarter; the lawyers very attentive; the sum recovered, in the end, some ninety pounds a year. The village was kind — punctually, audibly kind. <span class="lacuna">[…]</span> rooms were found over the shop across from the Crown: a parlour and two chambers, very airy, every body said.`),
+ choices:()=>[
+  {l:"Take the rooms.",to:"endPAR"},
+  {l:"Take the rooms, and take in the riddle-book, which survived the sale.",to:"endPAR",mk:"book"}]},
+
+};
+
+/* ————— endings ————— */
+const E={
+endUNION:{name:"the union",verdict:"You married on Miss Austen’s schedule.",compare:()=>
+  fl(`The wedding was very much like other weddings, where the parties have no taste for finery or parade… “Very little white satin, very few lace veils; a most pitiful business!”—But, in spite of these deficiencies, the wishes, the hopes, the confidence, the predictions of the small band of true friends who witnessed the ceremony, were fully answered in the perfect happiness of the union.`)+
+  (S.div
+   ? p(`Once — ${S.div.p} — you stepped off her path, and the path waited for you as paths in this country do. The book that was written and the book you made differ in the margin only: you doubted where she believed, and married where she married. The comedy was always going to carry you here; you merely made it earn its ending.`)
+   : p(`You never once left her path. Every reading she wanted, you wanted; every door she passed, you passed with your head as high and your eyes as busy elsewhere. The book that was written and the book you made are the same book, down to the white satin — which is either the highest compliment a reader ever paid an author, or the quietest thing that can happen to a year of choices. The chronicle, being satisfied, declines to say which.`))},
+endSEA:{name:"the sea",verdict:"You left the story; the story did not notice.",compare:()=>
+  p(`The book you walked out of closed itself without you: its lovers were forgiven at Randalls, its vicarage crowed, its autumn weddings came off in fine weather, and no chapter records that anything was missing. Your two paths parted exactly ${S.div?S.div.p:"at the parlour door"}, and the author kept the parlour.`)+
+  p(`Of your Weymouth year the chronicle holds three letters, a subscription list, and a tide-table marked in pencil; the author holds nothing at all, for the author was never there. She sent her heroine to the sea in no chapter — that was the wager of going. A story went on; a person went elsewhere; only one of them was ever obliged to make sense.`)},
+endENS:{name:"enscombe",verdict:"You escaped the book by reading one man your own way to the last.",compare:()=>
+  p(`In the author’s book Frank Churchill rode to Windsor and was forgiven; in yours he rode to Hartfield and was accepted. The paths parted ${S.div?S.div.p:"in the mourning-week"}, and everything after is yours: the great cold house, the hundred rooms, the husband who is a delightful page with nothing fixed upon it, and a name in a Bristol paper that breakfast must survive each time it appears.`)+
+  p(`You had unriddled every cipher in the book by June — and chose, with open eyes, the one reading no evidence could be made to close. The author would observe, without unkindness, that this was the most faithful imitation of her heroine you performed all year; you only performed it in a richer house.`)},
+endPAR:{name:"the parlour",verdict:"The comedy went on; it was only elsewhere.",compare:()=>
+  p(`The paths parted ${S.div?S.div.p:"in the shrubbery"}, on a refusal whose reasons you had by heart and never once read to the bottom. In the author’s book that evening ends in an acceptance, and every thing after it is warmth; she had built the other ending too, all along, and left it standing in Highbury where anyone could see it — a parlour up one flight, a ladder of small kindnesses, a lady whom the village is punctually good to. You had visited it for years. You had been witty about it once, on a hill.`)+
+  p(`Ninety pounds a year, rooms opposite the Crown, and the riddle-book on the shelf: this is not a punishment; the chronicle does not deal in those. It is only what the comedy looks like from the one window she never made her heroine stand at long.`)},
+endHA:{name:"hartfield alone",verdict:"Clear-eyed, you refused the author’s happiness and kept your own counsel.",compare:()=>
+  p(`You saw everything her heroine was a volume learning to see — you had the evidence copied fair, the ledger honest — and at the garden door you declined the reward for seeing it. The paths parted ${S.div?S.div.p:"in the shrubbery"}: in her book that walk ends at a wedding with very little white satin; in yours it ends at the tea-table, her father wanting his gruel, the fire good, the vow of years kept with the eyes open.`)+
+  p(`A single woman of good fortune is always respectable — your own doctrine, tested to the letter and found to hold. The author, who ended her own days unmarried in a house of women, would have understood the ending perfectly; she simply never gave it to Emma. Now somebody has.`)},
+endAM:{name:"abbey-mill",verdict:"The happiness in this book was Harriet’s; you signed it over early.",compare:()=>
+  p(`One honest answer in December undid three volumes: the letter from Abbey-Mill got the reply its writer deserved, and Harriet has been Mrs. Robert Martin ever since — a year of it now, stout and glad, with walnuts in the parlour every autumn. That was where your book and the author’s truly parted, whatever came after; she needed Harriet aimable and aimless for two more volumes, and you settled her in chapter seven.`)+
+  p(`At the garden door you refused for yourself what you had once refused to arrange for others, and went home to your father. The chronicle closes at the farm gate on a harvest supper, lit windows, singing inside — the redemption in this book displaced onto its gentlest person, which its author, of all people, would have called a very good exchange.`)},
+};
+
+/* ————— engine ————— */
+function save(){try{localStorage.setItem("emma-riddles",JSON.stringify(S));}catch(e){}}
+function begin(){S=freshState();render("title",true);}
+function goto_(id){
+  if(id==="__resume"){try{S=JSON.parse(localStorage.getItem("emma-riddles"));}catch(e){S=freshState();}render(S.node,true);return;}
+  render(id);
+}
+function choose(ch,nodeId){
+  if(ch.set) ch.set();
+  S.mark = ch.mk||null;
+  if(ch.canon===false && !S.div) S.div={p:ch.div||"early, in a small thing"};
+  const to = (typeof ch.to==="function")?ch.to():ch.to;
+  goto_(to);
+}
+function render(id,noScroll){
+  S.node=id; save();
+  const el=document.getElementById("page");
+  let html="";
+  if(E[id]){
+    const e=E[id];
+    html=`<div class="finis"><div class="fin">finis</div><div class="ename">${e.name}</div>`+
+         `<hr class="rule"><p class="verdict">${e.verdict}</p><div class="compare">${e.compare()}</div>`+
+         `<hr class="rule"><ul class="choices bare"><li><button onclick="begin()">begin again</button></li></ul></div>`;
+  }else{
+    const n=N[id];
+    html = (n.raw?"":`<p class="date">${n.date}</p>`) + (n.frag?`<div class="frag">${n.text()}</div>`:n.text());
+    const cs=n.choices?n.choices():[];
+    html+=`<ul class="choices${n.bare?" bare":""}">`+cs.map((c,i)=>`<li><button data-i="${i}">${c.l}</button></li>`).join("")+`</ul>`;
+    el.innerHTML=html;
+    el.querySelectorAll("button[data-i]").forEach(b=>{
+      b.addEventListener("click",()=>choose(cs[+b.dataset.i],id));
+    });
+    el.style.animation="none";void el.offsetWidth;el.style.animation="";
+    if(!noScroll) window.scrollTo({top:0,behavior:"instant"});
+    return;
+  }
+  el.innerHTML=html;
+  el.style.animation="none";void el.offsetWidth;el.style.animation="";
+  if(!noScroll) window.scrollTo({top:0,behavior:"instant"});
+}
+begin();
+</script>
+</body>
+</html>
