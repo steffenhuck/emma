@@ -1,0 +1,222 @@
+# THE ESCAPABLE CANON — generic build prompt
+
+## What this is
+
+A series of literary adaptations of public-domain novels as browser-based adventure
+games. Each volume takes one novel; one path through the game is the novel's actual
+unfolding; around it, a universe of alternative paths. The dramatic question of every
+volume: can you leave the path the author wrote?
+
+The full text of the novel for this volume is in this repo as `novel.txt`
+(boilerplate stripped). **First step, always:** read it in full, and state explicitly
+which edition/translation you have been given. All register and voice decisions
+anchor to *this text* — not to the original language, not to your general knowledge
+of the book.
+
+## Architecture (fixed for every volume — do not improvise on these)
+
+- **State graph, not a tree.** Forks (same node, different actions → different
+  nodes) and joins (different histories → same node). Joins keep authoring cost
+  linear while play feels combinatorial.
+- **Acyclic by a forward arrow.** Identify the novel's monotone quantity — dates,
+  chapters, a journey's stations, a debt that only grows, a season — and anchor
+  every node to it. Every action moves it strictly forward; cycles are impossible
+  by construction. Name the arrow explicitly in Stage 1.
+- **Markovian merges, tinted sparsely.** When paths merge, history is forgotten —
+  except for a small flag set (maximum 5) that selects conditional text variants
+  without splitting the graph, plus one-node marks for immediate texture. Choose
+  merge points where forgetting is narratively plausible.
+- **Gates.** Some later escapes succeed or fail depending on flags set much
+  earlier. At least two gates per volume; the player should not be able to see
+  the mechanism.
+- **Spine of roughly 30–40 nodes; playthrough of about an hour** — regardless of
+  source length. Omission is licensed and unapologetic: whole plot-lines may fall,
+  major characters may shrink to a sentence. The closing comparison judges the
+  player against the spine as built, not against the book entire.
+- **Endings: 5 or 6.** Two slots are fixed: (a) the canon ending, rendered in the
+  novel's own register and its own formal frame; (b) one genre-flip ending — for a
+  tragedy, a deliberately kitschy happy exit written in the novel's own rhetoric
+  turned to joy; for a comedy, one genuinely dark exit. The rest are in-between
+  endings (survival in body but not spirit; redemption displaced onto a minor
+  character; leaving the story such that the story does not notice).
+- **The closing comparison.** At the end, the frame-voice sets the player's story
+  beside the author's — in **prose, never as a score**. No counts, no tallies, no
+  percentages, no "you kept to N of M nodes," no list of divergences as bullet
+  items: a scoreboard invites optimization and implies that following the author
+  is a thing to be maximized, which is the opposite of the point. Instead, two to
+  four sentences in the frame-voice, written for this particular playthrough, that
+  name where the two paths parted and what each became — one dry verdict line in
+  the series rhetoric ("You died on Goethe's schedule"; "You left the story; the
+  story did not notice") followed by a short passage comparing the book that was
+  written with the book the player made. Where the player never diverged, say so
+  plainly. The comparison is the reward; it must read like the closing paragraph
+  of an edition, not like a results screen.
+
+## Escape corridors (radical departures)
+
+Branch-loops that rejoin the spine keep the player inside the novel's own
+geography. Each volume also gets **2–3 escape corridors**: radical departures into
+situations the novel never contains — a different country, trade, war, marriage,
+life. Rules:
+
+- A corridor opens at a load-bearing fork, runs 5–8 nodes on its own arrow
+  segment, **never rejoins the spine**, and terminates in its own ending (these
+  count within the 5–6 ending budget).
+- **Premises are yours to invent — freely and unsupervised.** Do not restrict
+  yourself to what the text suggests; the whole point is to leave it. Only
+  constraint: corridors are built from the novel's *materials* — its era, its
+  social physics, the protagonist's actual competences and obsessions. New
+  country, not new character.
+- Rarity preserves gravity: corridors must be hard to reach — at least one gated
+  behind a flag — and the canon path must remain the path of least resistance.
+- **Documentation thins as the player escapes.** The frame-voice has ever less
+  material the further the story departs from the book: prose turns fragmentary,
+  conjectural, gapped ("of the Hamburg years we possess three letters and a bill
+  of lading"). The compression dial runs the full range: original prose at full
+  length (trapped) → frame-voice précis (the playable middle) → fragments and
+  conjecture (escaped; the archive exists only where the novel went).
+
+## The frame-voice (the central craft decision)
+
+The game is narrated throughout by a **compressing frame-voice** — an editor,
+chronicler, executor of papers, court record, or whatever frame the novel itself
+suggests. If the novel supplies one (an editor of letters, a narrator at one
+remove, a survivor telling the tale), borrow it; if not, invent a period-appropriate
+one. Either way the voice must be **of the same mettle as the novel's own** — its
+ghost speaking in précis: distill the book's actual idiom into a summarizing
+register that is unmistakably the same fabric. The novel's own prose appears only
+as short quoted flashes inside the frame-voice — at most a sentence or two per node.
+
+**Loss of agency is a compression dial, not a separate device.** Frame-voice and
+original prose are the same voice at different concentrations. As the player drifts
+deep onto the canon path toward the canon ending, the frame-voice recedes and the
+novel's own texture floods back — prose slows and lengthens, the original's formal
+signature (letters, clause-stacks, monologue, omniscience narrowing — name the
+novel's signature in Stage 1) takes over, choices thin and finally stop. Immersion
+itself is the danger signal. The canon endgame is a mandatory set piece exempt from
+all word budgets.
+
+## The first-time reader (guiding principle — overrides everything below where they conflict)
+
+**Every volume must be fully playable, enjoyable, and comprehensible for someone
+who has never read or even heard of the novel.** Knowing the book may add
+pleasure; it must never be required for comprehension. Audit every node against
+an imagined player who arrives knowing nothing:
+
+- Every character is introduced as if never met — at first appearance, and
+  briefly again on return after long absence.
+- Every allusion carries its own explanation in the same sentence; where the
+  frame-voice would compress by allusion, zoom out further and compress by plain
+  summary instead. In-jokes for readers of the original are welcome only as a
+  bonus layer, never as the load-bearing text.
+- Every callback briefly restates what it calls back to.
+
+## Prose and choice discipline
+
+- Default node: **80–150 words** in the frame-voice; hard cap 150 (excluding
+  choices and set pieces). Roughly one node in four or five is a **short node,
+  under 30 words** — a dated line, one sentence, a fragment. Short nodes still
+  carry a choice.
+- **First choice on the first screen.** Compress the opening; reach the first
+  decision immediately.
+- **Two or three sanctioned set pieces** (beyond the mandatory endgame) where a
+  full passage of the original may run — choose the novel's most famous moments.
+  But pacing: no heavy set piece in the game's first two or three screens. A set
+  piece earns its length only after the player has learned what brevity feels
+  like; if the novel's great scene comes early, trim it — enter the passage late
+  and leave it early.
+- **A choice at every node. No pure "continue" buttons** — with one deliberate
+  exception: inside the canon endgame, where agency is dying, converging
+  no-effect choice-pairs must NOT be dressed up as decisions. Use a single bare
+  option there — "(the letter continues)", "(the chapter turns)" — the visible
+  death of choice is the mechanism, and the contrast with the choice-rich middle
+  game is the point. Most nodes offer 2–4
+  options. Total choice count should be high. **Converging choices are
+  encouraged**: options leading to the same node
+  that differ only in a mark, a tint, or nothing but flavour. Trivial forks and
+  fatal forks must be indistinguishable on the surface — the protagonist cannot
+  tell them apart either; that is the theme. Delayed consequences via flags/marks
+  are welcome.
+- **Choice-label legibility.** Every label must be intelligible entirely on its
+  own: name the object of the action explicitly; no pronoun whose antecedent is
+  not in the same sentence; if the node's final paragraph has moved on to topic
+  X, a choice about earlier topic Y must reintroduce Y by name. Literary
+  allusion in a label is welcome only on top of a legible action, never instead
+  of one.
+- Choices are written in the protagonist's idiom — things they might do or say —
+  never in game-mechanical language.
+- This is a retelling: invent freely on the untrodden paths. Fidelity to tone
+  everywhere, fidelity to wording nowhere; the odd original quotation woven in
+  where it lands is welcome (the text is public domain).
+
+## Series liturgy (uniform across volumes)
+
+- Title page: "a game of letters, after —" / "a game of chapters, after —" (match
+  the novel's unit), author and translator credited, then the frame-voice's preface
+  ending with a version of: *the reader of a book follows; the reader of this book
+  chooses.*
+- FINIS block: ending name in small caps, one verdict line, the closing prose
+  comparison (see above — no scores, no lists), "begin again."
+- Single self-contained HTML file. **Visual design is native to the novel, not to
+  the series.** The uniform elements are the grammar only — title formula, FINIS
+  block, verdict rhetoric, the closing comparison. Everything visual (typography,
+  colour, texture, layout, motion) must be built from the novel's own time, place,
+  and genre temperature: an 18th-century epistolary novel gets foxed paper and a
+  Fell face; a 1920s novel gets its own century's print culture; a thriller gets
+  visual thrill — pace, contrast, loud colour where loud colour is true. Do not
+  default to antiquarian good taste; default to the book. Propose the design
+  direction in Stage 1 in one or two sentences alongside the frame-voice sample —
+  the two must be of the same mettle.
+- GoatCounter in <head>:
+  `<script data-goatcounter="https://steffenhuck.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>`
+  **Page-load count only — do NOT attach event counts to nodes, choices, or any
+  in-game action.** One count per visit, on the landing page; nothing else.
+- Footer: lowercase italic "steffen huck" linking to https://steffenhuck.github.io
+- **Repo and deployment workflow.** The repo already exists and is already
+  configured: GitHub Pages deploys automatically from branch `main`, root
+  directory. The novel text is already committed. Work directly in this repo:
+  put `index.html` (and any assets) at the repo root, and **commit and push
+  directly to `main` — do not create branches, pull requests, or subfolders,
+  and do not require any merge or deployment step from Steffen.** Every push to
+  `main` goes live on its own.
+
+## Process — two stages, approval gate between them
+
+**Stage 1 — read and propose. No passage-writing, no UI.**
+After reading `novel.txt` in full, propose:
+- the edition/translation identified, and three sentences of frame-voice sample
+  prose demonstrating the mettle;
+- the forward arrow, and the novel's formal signature (the thing that floods back
+  as agency is lost);
+- the node map: spine nodes with arrow-positions, fork points, branch routes and
+  their rejoin/termination points, including the escape corridors (corridor
+  premises are listed for information only — they are your free invention and
+  not subject to curation);
+- the flag set (≤5), the gates, the marks in outline;
+- the ending set (5–6) with trigger conditions, naming the canon slot and the
+  genre-flip slot;
+- the set pieces;
+- what is omitted from the novel, stated plainly.
+
+Then run the design checks and report:
+1. **Reachability** — no orphan nodes; every ending attainable.
+2. **Canon replication** — a player mimicking the protagonist's actual choices
+   reproduces the novel's trajectory and ending exactly.
+3. **Non-triviality** — escaping the canon path is genuinely possible but not
+   trivial; the arrow has gravity.
+4. **Join consistency** — for every merge point, verify each incoming path against
+   all downstream text; where a path contradicts it (a character never met, an
+   event never witnessed), add conditional variants or move the join.
+5. **Micro-chronology and causality** — the graph being a DAG does not protect
+   the prose inside a node. Audit every node, sentence by sentence: events must
+   be narrated in the order they occur; nothing may be referenced, assumed, or
+   foreshadowed as done before the text reaches it (e.g. a ball scene must not
+   mention handing the lady into the carriage in mid-scene when that happens at
+   the end); choice labels must not presuppose outcomes of the choice; conditional
+   variant parts must read correctly in every combination of flags and marks that
+   can display them. Run this audit again in Stage 2 on the finished prose, not
+   only on the plan.
+
+Wait for approval before Stage 2.
+
+**Stage 2 — write and assemble** the single-file HTML.
